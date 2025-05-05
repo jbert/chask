@@ -42,14 +42,22 @@ executable chask
     hs-source-dirs: app
     default-language: Haskell2010
 
+library
+    import: warnings
+    ghc-options: -fno-ignore-asserts    
+    exposed-modules: Chask
+    -- other-modules:
+    build-depends: 
+        base
 
 
 Test-Suite test-set1
     import: warnings
     type:       exitcode-stdio-1.0
     main-is:    Set1.hs
-    build-depends:  base
-                    , HUnit
-                    , base64-bytestring
-                    , bytestring
-                    , split
+    build-depends:
+        base
+        , HUnit
+        , base64-bytestring
+        , bytestring
+        , split
