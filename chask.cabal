@@ -45,6 +45,7 @@ executable chask
 
 
 Test-Suite test-set1
+    import: warnings
     type:       exitcode-stdio-1.0
     main-is:    Set1.hs
-    build-depends: base, HUnit
+    build-depends: base, HUnit, base64-bytestring, bytestring
