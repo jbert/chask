@@ -1,8 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Chask
   ( toHex,
     fromHex,
     toB64,
     xorBS,
+    xorByte,
+    englishScore,
+    englishScoreBS,
+    letterFreq,
+    englishFreq,
+    freqDiff,
   )
 where
 
@@ -10,7 +18,11 @@ import Data.Bits
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as BSB64
 import qualified Data.ByteString.Char8 as C8
+import Data.Char
+import Data.Function
+import Data.List
 import Data.List.Split
+import qualified Data.Map as M
 import Data.Word
 import Numeric
 
@@ -81,3 +93,67 @@ xorBS a b =
           Left ("Length mismatch: " ++ show la ++ " != " ++ show lb)
         else
           Right (B.pack (zipWith xor (B.unpack a) (B.unpack b)))
+
+xorByte :: Word8 -> B.ByteString -> B.ByteString
+-- Do we prefer pipeline with `&`? Or reverse-order with `$`
+-- xorByte b bs = B.pack $ map (`xor` b) $ B.unpack bs
+xorByte b bs = bs & B.unpack & map (`xor` b) & B.pack
+
+type LetterFreq = M.Map Char Double
+
+englishFreq =
+  M.fromList
+    [ ('E', 12.49),
+      ('T', 9.28),
+      ('A', 8.04),
+      ('O', 7.64),
+      ('I', 7.57),
+      ('N', 7.23),
+      ('S', 6.51),
+      ('R', 6.28),
+      ('H', 5.05),
+      ('L', 4.07),
+      ('D', 3.82),
+      ('C', 3.34),
+      ('U', 2.73),
+      ('M', 2.51),
+      ('F', 2.40),
+      ('P', 2.14),
+      ('G', 1.87),
+      ('W', 1.68),
+      ('Y', 1.66),
+      ('B', 1.48),
+      ('V', 1.05),
+      ('K', 0.54),
+      ('X', 0.23),
+      ('J', 0.16),
+      ('Q', 0.12),
+      ('Z', 0.09)
+    ]
+
+mapSum :: M.Map Char Double -> Double
+mapSum = M.foldr (+) 0
+
+freqDiff :: M.Map Char Double -> M.Map Char Double -> Double
+freqDiff a b = mapSum (M.differenceWith (\a b -> Just $ abs (a - b)) a b) / 100.0
+
+-- Which is preferred? Pipelining with `$` or `&`
+letterFreq :: String -> M.Map Char Double
+letterFreq s =
+  let chars = filter isAlpha s
+      numChars = fromIntegral $ length chars
+   in M.fromList $ map (\l -> (head l, fromIntegral (length l) / numChars * 100.0)) $ group $ sort $ map toUpper chars
+
+-- always -ve, higher is better
+englishScore :: String -> Double
+englishScore s =
+  let allowed = [' ', ',', '.', '-', '\'', '"', '!', '?']
+      fs = filter (`notElem` allowed) s
+      numNonAlpha = fromIntegral $ length $ filter (not . isAlpha) fs
+      diffScore = freqDiff englishFreq $ letterFreq s
+   in -(numNonAlpha + diffScore)
+
+englishScoreBS :: B.ByteString -> Double
+englishScoreBS s =
+  let chars = C8.unpack s
+   in englishScore chars

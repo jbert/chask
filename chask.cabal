@@ -38,6 +38,7 @@ library
         , base64-bytestring
         , bytestring
         , split
+        , containers
 
 executable set1
     -- Import common warning flags.
@@ -57,6 +58,7 @@ executable set1
         , base64-bytestring
         , bytestring
         , split
+        , containers
 
     -- Directories containing source files.
     hs-source-dirs: app, src
@@ -76,4 +78,5 @@ Test-Suite test-set1
         , base64-bytestring
         , bytestring
         , split
+        , containers
 
